@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Game</title>
+</head>
+<body>
+    <h1>Enter PIN (6-Digit Number): <input type="text" id="id_room"></h1>
+    <h1>Enter Username: <input type="text" id="username"></h1>
+    <button id="join-game-button">Join Game</button>
+    <div id="data-display"></div>
+    <a href="index.html" id="exitButton">Exit</a>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDLY7ie39rKxvU_Evkq-VK25uvlVgqm6yQ",
+            authDomain: "diesesi-spiel-ist-gesund.firebaseapp.com",
+            databaseURL: "https://diesesi-spiel-ist-gesund-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "diesesi-spiel-ist-gesund",
+            storageBucket: "diesesi-spiel-ist-gesund.appspot.com",
+            messagingSenderId: "419197734080",
+            appId: "1:419197734080:web:834d4e0854eed5cec53125"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let docRef;  // To store the document reference for the game room
+        let currentUser = {};  // To store the current player's information
+        let inactivityTimeout;  // To track inactivity
+
+        // Function to join the game
+        async function joinGame(docId, username) {
+            try {
+                docRef = doc(db, "multiplayers", docId);
+                const docSnap = await getDoc(docRef);
+
+                const displayDiv = document.getElementById('data-display');
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    let content = "<h2>Game Room Data:</h2>";
+                    for (const key in data) {
+                        if (data.hasOwnProperty(key)) {
+                            content += `<p><strong>${key}:</strong> ${data[key]}</p>`;
+                        }
+                    }
+                    displayDiv.innerHTML = content;
+
+                    if (username) {
+                        // Add the player to the Firestore document's players array
+                        currentUser = { name: username, role: 'player' };
+                        await updateDoc(docRef, {
+                            players: arrayUnion(currentUser)
+                        });
+                        console.log("Joined game successfully with username:", username);
+
+                        // Start the inactivity timer
+                        startInactivityTimer();
+                    } else {
+                        alert("You must enter a username to join the game.");
+                    }
+                } else {
+                    alert("No game found with that PIN. Please try again.");
+                }
+            } catch (error) {
+                console.error("Error reading document:", error);
+                alert("An error occurred while trying to join the game.");
+            }
+        }
+
+        // Function to start the inactivity timer
+        function startInactivityTimer() {
+            // Clear any existing timer
+            clearTimeout(inactivityTimeout);
+
+            // Set a timer for 5 minutes (300,000 milliseconds)
+            inactivityTimeout = setTimeout(async () => {
+                if (docRef && currentUser.name) {
+                    // Remove the player from the Firestore document's players array
+                    await updateDoc(docRef, {
+                        players: arrayRemove(currentUser)
+                    });
+                    console.log("Player removed from the game due to inactivity.");
+                    alert("You have been removed from the game due to inactivity.");
+                }
+            }, 300000); // 5 minutes
+        }
+
+        // Event listener for the "Join Game" button
+        document.getElementById('join-game-button').addEventListener('click', () => {
+            const roomId = document.getElementById('id_room').value;
+            const username = document.getElementById('username').value;
+
+            if (roomId && username) {
+                joinGame(roomId, username);
+            } else {
+                alert("Please enter both a 6-digit PIN and your username.");
+            }
+        });
+
+        // Reset the inactivity timer on user interaction (e.g., mouse or keyboard activity)
+        window.addEventListener('mousemove', startInactivityTimer);
+        window.addEventListener('keydown', startInactivityTimer);
+
+        // Handle player removal when the "Exit" button is clicked
+        document.getElementById('exitButton').addEventListener('click', async (event) => {
+            event.preventDefault(); // Prevent the default link behavior
+            if (docRef && currentUser.name) {
+                // Remove the player from the Firestore document's players array
+                await updateDoc(docRef, {
+                    players: arrayRemove(currentUser)
+                });
+                console.log("Player removed from the game on exit.");
+            }
+            // Redirect to the index.html page after player removal
+            window.location.href = "index.html";
+        });
+    </script>
+</body>
+</html>

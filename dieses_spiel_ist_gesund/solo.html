@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Day 1: Morning Routine</h1>
+
+<div id="situation1">
+    <p>You wake up in the morning. Would you like to try 1 cup of coffee?</p>
+    <button onclick="handleChoice(1, 'yes')">Yes</button>
+    <button onclick="handleChoice(1, 'no')">No</button>
+</div>
+
+<div id="situation2" style="display:none;">
+    <p>You have 1 hour before going to work. Do you need to go jogging?</p>
+    <button onclick="handleChoice(2, 'yes')">Yes</button>
+    <button onclick="handleChoice(2, 'no')">No</button>
+</div>
+
+<div id="situation3" style="display:none;">
+    <p>What would you like to eat for breakfast?</p>
+    <button onclick="handleChoice(3, '1')">Hamburger</button>
+    <button onclick="handleChoice(3, '2')">Sandwich</button>
+    <button onclick="handleChoice(3, '3')">Pasta</button>
+</div>
+
+<div id="result" class="result" style="display:none;">
+    <h2>End of Morning Status:</h2>
+    <p id="status"></p>
+    <a href="index.html">exit</a>
+</div>
+
+<script src="game.js"></script>
+
+</body>
+</html>

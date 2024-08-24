@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Game</title>
+</head>
+<body>
+    <h1>Random 6-Digit Number: <span id="randomNumber"></span></h1>
+    <h2>Player List:</h2>
+    <ul id="player-list"></ul> <!-- List to display players -->
+    <div id="data-display"></div>
+    <a id="startButton" href="wait_answer.html">Start</a>
+    <a href="index.html" id="exitButton">Exit</a>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, arrayRemove } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDLY7ie39rKxvU_Evkq-VK25uvlVgqm6yQ",
+            authDomain: "diesesi-spiel-ist-gesund.firebaseapp.com",
+            databaseURL: "https://diesesi-spiel-ist-gesund-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "diesesi-spiel-ist-gesund",
+            storageBucket: "diesesi-spiel-ist-gesund.appspot.com",
+            messagingSenderId: "419197734080",
+            appId: "1:419197734080:web:834d4e0854eed5cec53125"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        let docRef; // To store the document reference
+        let heartbeatInterval; // To store the interval ID
+        let preventDeletion = false; // To prevent deletion when starting the game
+
+        // Generate a random 6-digit number
+        function getRandomSixDigitNumber() {
+            return Math.floor(100000 + Math.random() * 900000);
+        }
+
+        // Setup game room data
+        async function setupData() {
+            const randomNumber = getRandomSixDigitNumber();
+            document.getElementById('randomNumber').textContent = randomNumber;
+
+            const data = {
+                id_room: randomNumber,
+                players: [], // Initialize an empty array for players
+                last_active: Date.now()
+            };
+
+            // Save game room data to Firestore
+            docRef = doc(db, "multiplayers", randomNumber.toString());
+            await setDoc(docRef, data);
+
+            // Listen for changes in the players array and update the player list
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const playerList = data.players || [];
+                    const playerListElement = document.getElementById('player-list');
+                    playerListElement.innerHTML = ""; // Clear the current list
+
+                    playerList.forEach(player => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = `${player.name} (${player.role})`;
+
+                        // Add a "Kick" button next to each player
+                        const kickButton = document.createElement('button');
+                        kickButton.textContent = "Kick";
+                        kickButton.style.marginLeft = "10px";
+                        kickButton.onclick = () => kickPlayer(player);
+
+                        listItem.appendChild(kickButton);
+                        playerListElement.appendChild(listItem);
+                    });
+                }
+            });
+
+            // Update the host's last active time periodically
+            const updateLastActive = async () => {
+                await updateDoc(docRef, {
+                    last_active: Date.now()
+                });
+            };
+            heartbeatInterval = setInterval(updateLastActive, 60000); // 1 minute
+
+            // Handle tab or window close
+            window.addEventListener('beforeunload', handleTabClose);
+
+            // Handle click on Exit button
+            const exitButton = document.getElementById('exitButton');
+            exitButton.addEventListener('click', handleExitClick);
+
+            // Handle click on Start button
+            const startButton = document.getElementById('startButton');
+            startButton.addEventListener('click', handleStartClick);
+        }
+
+        // Function to handle the tab/window close event
+        async function handleTabClose(event) {
+            if (!preventDeletion) { // Check if deletion should be prevented
+                clearInterval(heartbeatInterval);
+                await deleteDoc(docRef);
+                console.log("Document deleted on tab/window close.");
+            }
+        }
+
+        // Function to handle the Exit button click event
+        async function handleExitClick(event) {
+            clearInterval(heartbeatInterval);
+            window.removeEventListener('beforeunload', handleTabClose); // Prevent deletion on tab close after click
+            await deleteDoc(docRef);
+            console.log("Document deleted on exit.");
+        }
+
+        // Function to handle the Start button click event
+        function handleStartClick(event) {
+            preventDeletion = true; // Prevent deletion when starting the game
+            window.removeEventListener('beforeunload', handleTabClose); // Remove the unload event listener
+            console.log("Start button clicked, room will not be deleted.");
+        }
+
+        // Function to kick a player
+        async function kickPlayer(player) {
+            if (confirm(`Are you sure you want to kick ${player.name}?`)) {
+                await updateDoc(docRef, {
+                    players: arrayRemove(player)
+                });
+                console.log(`${player.name} has been kicked from the game.`);
+            }
+        }
+
+        // Initialize setup
+        setupData();
+    </script>
+</body>
+</html>
