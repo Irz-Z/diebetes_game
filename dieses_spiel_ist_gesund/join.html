@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Join Game</title>
 </head>
+
 <body>
     <h1>Enter PIN (6-Digit Number): <input type="text" id="id_room"></h1>
     <h1>Enter Username: <input type="text" id="username"></h1>
     <button id="join-game-button">Join Game</button>
     <div id="data-display"></div>
     <a href="index.html" id="exitButton">Exit</a>
+
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, arrayUnion, arrayRemove, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -31,9 +34,16 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let docRef;  // To store the document reference for the game room
-        let currentUser = {};  // To store the current player's information
-        let inactivityTimeout;  // To track inactivity
+        let docRef; // To store the document reference for the game room
+        let currentUser = {}; // To store the current player's information
+        let inactivityTimeout; // To track inactivity
+
+        // Check if the page was visited after navigating from create_game.html
+        if (sessionStorage.getItem("fromCreateGame") === "true") {
+            document.getElementById('id_room').value = "";
+            document.getElementById('username').value = "";
+            sessionStorage.removeItem("fromCreateGame"); // Reset the flag after clearing
+        }
 
         // Function to join the game
         async function joinGame(docId, username) {
@@ -41,17 +51,47 @@
                 docRef = doc(db, "multiplayers", docId);
                 const docSnap = await getDoc(docRef);
 
-                const displayDiv = document.getElementById('data-display');
-
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    let content = "<h2>Game Room Data:</h2>";
-                    for (const key in data) {
-                        if (data.hasOwnProperty(key)) {
-                            content += `<p><strong>${key}:</strong> ${data[key]}</p>`;
-                        }
+
+                    // Check if the game status is "started"
+                    if (data.game_status === "started") {
+                        // Transition to the interactive game content
+                        document.body.innerHTML = getInteractiveGameContent();
+                        runInteractiveGameScript();
+                        return;
                     }
-                    displayDiv.innerHTML = content;
+
+                    // Real-time listener for the game room document
+                    onSnapshot(docRef, (doc) => {
+                        if (doc.exists()) {
+                            const data = doc.data();
+                            const displayDiv = document.getElementById('data-display');
+                            let content = "<h2>Game Room Data:</h2>";
+                            for (const key in data) {
+                                if (data.hasOwnProperty(key)) {
+                                    content += `<p><strong>${key}:</strong> ${data[key]}</p>`;
+                                }
+                            }
+                            displayDiv.innerHTML = content;
+
+                            // Check if the game status changes to "started" and transition to the new game content
+                            if (data.game_status === "started") {
+                                document.body.innerHTML = getInteractiveGameContent();
+                                runInteractiveGameScript();
+                            }
+
+                            // Check if the player has been removed from the game
+                            const playerExists = data.players.some(player => player.name === currentUser.name);
+                            if (!playerExists) {
+                                alert("You have been kicked out of the game.");
+                                window.location.href = "index.html"; // Redirect to index.html
+                            }
+                        } else {
+                            alert("The room has been deleted.");
+                            window.location.href = "index.html"; // Redirect to index.html
+                        }
+                    });
 
                     if (username) {
                         // Add the player to the Firestore document's players array
@@ -89,6 +129,7 @@
                     });
                     console.log("Player removed from the game due to inactivity.");
                     alert("You have been removed from the game due to inactivity.");
+                    window.location.href = "index.html"; // Redirect to index.html
                 }
             }, 300000); // 5 minutes
         }
@@ -122,6 +163,61 @@
             // Redirect to the index.html page after player removal
             window.location.href = "index.html";
         });
+
+        // Function to return the HTML content for the interactive game
+        function getInteractiveGameContent() {
+            return `
+                <h1>Day 1: Morning Routine</h1>
+
+                <div id="situation1">
+                    <p>You wake up in the morning. Would you like to try 1 cup of coffee?</p>
+                    <button onclick="handleChoice(1, 'yes')">Yes</button>
+                    <button onclick="handleChoice(1, 'no')">No</button>
+                </div>
+
+                <div id="situation2" style="display:none;">
+                    <p>You have 1 hour before going to work. Do you need to go jogging?</p>
+                    <button onclick="handleChoice(2, 'yes')">Yes</button>
+                    <button onclick="handleChoice(2, 'no')">No</button>
+                </div>
+
+                <div id="situation3" style="display:none;">
+                    <p>What would you like to eat for breakfast?</p>
+                    <button onclick="handleChoice(3, '1')">Hamburger</button>
+                    <button onclick="handleChoice(3, '2')">Sandwich</button>
+                    <button onclick="handleChoice(3, '3')">Pasta</button>
+                </div>
+
+                <div id="result" class="result" style="display:none;">
+                    <h2>End of Morning Status:</h2>
+                    <p id="status"></p>
+                    <a href="index.html">exit</a>
+                </div>
+            `;
+        }
+
+        // Function to run the interactive game script after content is loaded
+        function runInteractiveGameScript() {
+            let situation = 1;
+
+            function handleChoice(situationNumber, choice) {
+                if (situationNumber === 1) {
+                    document.getElementById('situation1').style.display = 'none';
+                    document.getElementById('situation2').style.display = 'block';
+                } else if (situationNumber === 2) {
+                    document.getElementById('situation2').style.display = 'none';
+                    document.getElementById('situation3').style.display = 'block';
+                } else if (situationNumber === 3) {
+                    document.getElementById('situation3').style.display = 'none';
+                    document.getElementById('result').style.display = 'block';
+                    document.getElementById('status').innerText = `You chose option ${choice} for breakfast.`;
+                }
+            }
+
+            // Expose the function to global scope
+            window.handleChoice = handleChoice;
+        }
     </script>
 </body>
+
 </html>

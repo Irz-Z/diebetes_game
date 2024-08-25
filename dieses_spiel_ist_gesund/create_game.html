@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Game</title>
 </head>
+
 <body>
     <h1>Random 6-Digit Number: <span id="randomNumber"></span></h1>
     <h2>Player List:</h2>
     <ul id="player-list"></ul> <!-- List to display players -->
     <div id="data-display"></div>
-    <a id="startButton" href="wait_answer.html">Start</a>
-    <a href="index.html" id="exitButton">Exit</a>
+    <button id="startButton">Start</button>
+    <a href="#" id="exitButton">Exit</a> <!-- Adjusted to '#' since it will be handled by JavaScript -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
         import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, arrayRemove } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -47,7 +49,8 @@
             const data = {
                 id_room: randomNumber,
                 players: [], // Initialize an empty array for players
-                last_active: Date.now()
+                last_active: Date.now(),
+                game_status: 'pre' // Set the initial game status to 'pre'
             };
 
             // Save game room data to Firestore
@@ -109,17 +112,34 @@
 
         // Function to handle the Exit button click event
         async function handleExitClick(event) {
+            event.preventDefault(); // Prevent default link behavior
             clearInterval(heartbeatInterval);
             window.removeEventListener('beforeunload', handleTabClose); // Prevent deletion on tab close after click
             await deleteDoc(docRef);
             console.log("Document deleted on exit.");
+            window.location.href = 'index.html'; // Redirect to index.html
         }
 
         // Function to handle the Start button click event
-        function handleStartClick(event) {
+        async function handleStartClick(event) {
             preventDeletion = true; // Prevent deletion when starting the game
             window.removeEventListener('beforeunload', handleTabClose); // Remove the unload event listener
-            console.log("Start button clicked, room will not be deleted.");
+
+            // Update the game status to 'started'
+            await updateDoc(docRef, {
+                game_status: 'started'
+            });
+
+            // Clear the content of the body to make it a blank page
+            document.body.innerHTML = "";
+
+            // Add an Exit button back to the blank page
+            const exitButton = document.createElement('button');
+            exitButton.textContent = "Exit";
+            exitButton.onclick = handleExitClick; // Attach the exit function to the button
+            document.body.appendChild(exitButton);
+
+            console.log("Start button clicked, game_status updated to 'started', room will not be deleted, and page reset to blank with an Exit button.");
         }
 
         // Function to kick a player
@@ -136,4 +156,5 @@
         setupData();
     </script>
 </body>
-</html>
+
+
