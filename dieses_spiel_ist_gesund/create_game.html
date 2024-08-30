@@ -34,7 +34,6 @@
         const db = getFirestore(app);
         let docRef; // To store the document reference
         let heartbeatInterval; // To store the interval ID
-        let preventDeletion = false; // To prevent deletion when starting the game
 
         // Generate a random 6-digit number
         function getRandomSixDigitNumber() {
@@ -103,11 +102,9 @@
 
         // Function to handle the tab/window close event
         async function handleTabClose(event) {
-            if (!preventDeletion) { // Check if deletion should be prevented
-                clearInterval(heartbeatInterval);
-                await deleteDoc(docRef);
-                console.log("Document deleted on tab/window close.");
-            }
+            clearInterval(heartbeatInterval); // Stop the heartbeat interval
+            await deleteDoc(docRef); // Delete the document in Firestore
+            console.log("Document deleted on tab/window close.");
         }
 
         // Function to handle the Exit button click event
@@ -122,9 +119,6 @@
 
         // Function to handle the Start button click event
         async function handleStartClick(event) {
-            preventDeletion = true; // Prevent deletion when starting the game
-            window.removeEventListener('beforeunload', handleTabClose); // Remove the unload event listener
-
             // Update the game status to 'started'
             await updateDoc(docRef, {
                 game_status: 'started'
@@ -139,7 +133,7 @@
             exitButton.onclick = handleExitClick; // Attach the exit function to the button
             document.body.appendChild(exitButton);
 
-            console.log("Start button clicked, game_status updated to 'started', room will not be deleted, and page reset to blank with an Exit button.");
+            console.log("Start button clicked, game_status updated to 'started', and page reset to blank with an Exit button.");
         }
 
         // Function to kick a player
@@ -157,4 +151,4 @@
     </script>
 </body>
 
-
+</html>
