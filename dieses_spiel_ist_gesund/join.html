@@ -167,56 +167,221 @@
         // Function to return the HTML content for the interactive game
         function getInteractiveGameContent() {
             return `
-                <h1>Day 1: Morning Routine</h1>
-
-                <div id="situation1">
-                    <p>You wake up in the morning. Would you like to try 1 cup of coffee?</p>
-                    <button onclick="handleChoice(1, 'yes')">Yes</button>
-                    <button onclick="handleChoice(1, 'no')">No</button>
-                </div>
-
-                <div id="situation2" style="display:none;">
-                    <p>You have 1 hour before going to work. Do you need to go jogging?</p>
-                    <button onclick="handleChoice(2, 'yes')">Yes</button>
-                    <button onclick="handleChoice(2, 'no')">No</button>
-                </div>
-
-                <div id="situation3" style="display:none;">
-                    <p>What would you like to eat for breakfast?</p>
-                    <button onclick="handleChoice(3, '1')">Hamburger</button>
-                    <button onclick="handleChoice(3, '2')">Sandwich</button>
-                    <button onclick="handleChoice(3, '3')">Pasta</button>
-                </div>
-
-                <div id="result" class="result" style="display:none;">
-                    <h2>End of Morning Status:</h2>
-                    <p id="status"></p>
-                    <a href="index.html">exit</a>
-                </div>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f5f5f5;
+                    margin: 0;
+                    padding: 20px;
+                    text-align: center;
+                }
+                #game-container {
+                    background-color: #fff;
+                    padding: 20px;
+                    border-radius: 10px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                    max-width: 600px;
+                    margin: auto;
+                }
+                #game-output {
+                    font-size: 18px;
+                    margin-bottom: 20px;
+                }
+                #choices-container button {
+                    margin: 10px;
+                    padding: 10px 20px;
+                    font-size: 16px;
+                    cursor: pointer;
+                    border: none;
+                    border-radius: 5px;
+                    background-color: #007bff;
+                    color: #fff;
+                    transition: background-color 0.3s;
+                }
+                #choices-container button:hover {
+                    background-color: #0056b3;
+                }
+                #result-before, #result-after {
+                    font-size: 16px;
+                    margin-bottom: 20px;
+                }
+            </style>
+            <div id="game-container">
+                <div id="game-output"></div>
+                <div id="choices-container"></div>
+                <div id="result-before"></div>
+                <div id="result-after"></div>
+            </div>
             `;
         }
 
         // Function to run the interactive game script after content is loaded
         function runInteractiveGameScript() {
-            let situation = 1;
+            let playerStatus = Array(15).fill().map(() => [0, 0, 0, 0]);
+        let currentStep = 0;
+        let dinnerChoice = '';
 
-            function handleChoice(situationNumber, choice) {
-                if (situationNumber === 1) {
-                    document.getElementById('situation1').style.display = 'none';
-                    document.getElementById('situation2').style.display = 'block';
-                } else if (situationNumber === 2) {
-                    document.getElementById('situation2').style.display = 'none';
-                    document.getElementById('situation3').style.display = 'block';
-                } else if (situationNumber === 3) {
-                    document.getElementById('situation3').style.display = 'none';
-                    document.getElementById('result').style.display = 'block';
-                    document.getElementById('status').innerText = `You chose option ${choice} for breakfast.`;
+        function displayMessage(message) {
+            document.getElementById('game-output').innerText = message;
+        }
+
+        function clearChoices() {
+            document.getElementById('choices-container').innerHTML = '';
+        }
+
+        function addChoice(text, onClick) {
+            const button = document.createElement('button');
+            button.innerText = text;
+            button.onclick = onClick;
+            document.getElementById('choices-container').appendChild(button);
+        }
+
+        function startGame() {
+            displayMessage("Day 1 ตื่นเช้ามากินอะไรดีน้าาาา");
+            clearChoices();
+            addChoice("ข้าวแกง", () => makeChoice(0, [2.6, 21.6, 50.1, 621.4], "Day 1 ข้าวแกง", lunchChoices));
+            addChoice("ขนมปัง", () => makeChoice(0, [2, 2, 5, 100], "Day 1 ขนมปัง", lunchChoices));
+            addChoice("ไม่กิน", () => makeChoice(0, [0, 0, 0, 0], "Day 1 ไม่กินดีกว่า", lunchChoices));
+        }
+
+        function makeChoice(step, status, message, nextStep) {
+            playerStatus[step] = status;
+            displayMessage(message);
+            nextStep();
+        }
+
+        function lunchChoices() {
+            displayMessage("Day 1 เที่ยงแล้วไปหาอะไรกินกันนนนน");
+            clearChoices();
+            addChoice("ก๋วยเตี๋ยว", () => makeChoice(1, [0.4, 2.1, 4.5, 180], "Day 1 ก๋วยเตี๋ยว", dinnerChoices));
+            addChoice("เบอร์เกอร์", () => makeChoice(1, [0, 10, 13, 266], "Day 1 เบอร์เกอร์", dinnerChoices));
+            addChoice("ไม่กิน", () => makeChoice(1, [0, 0, 0, 0], "Day 1 ไม่กินดีกว่า", dinnerChoices));
+        }
+
+        function dinnerChoices() {
+            displayMessage("Day 1 เย็นแล้วหาอะไรกินดีกว่า");
+            clearChoices();
+            addChoice("ข้าวแกง", () => {
+                dinnerChoice = 'ข้าวแกง';
+                randomEvent([3.6, 25.6, 60.1, 690.4], "Day 1 ข้าวแกง");
+            });
+            addChoice("ขนมปัง", () => {
+                dinnerChoice = 'ขนมปัง';
+                randomEvent([2, 2, 5, 100], "Day 1 ขนมปัง");
+            });
+            addChoice("ไม่กิน", () => {
+                dinnerChoice = 'ไม่กิน';
+                randomEvent([0, 0, 0, 0], "Day 1 ไม่กินดีกว่า");
+            });
+        }
+
+        function randomEvent(status, message) {
+    playerStatus[2] = status;
+    displayMessage(message);
+    clearChoices();
+    
+    if (Math.random() < 0.5) {
+        if (Math.random() < 0.5) {
+            // Change background color to blue for the running event
+            document.body.style.backgroundColor = '#87CEEB'; // Light blue
+
+            addChoice("ไปวิ่งดีกว่าค่อยกลับแล้วกัน", () => {
+                playerStatus[2] = [
+                    playerStatus[2][0] - 45,
+                    playerStatus[2][1] - 4,
+                    playerStatus[2][2] - 60,
+                    playerStatus[2][3] - 650
+                ];
+                endDay();
+            });
+            addChoice("เหนื่อยแล้วกลับบ้านดีกว่าา", () => endDay());
+        } else if (dinnerChoice !== 'ขนมปัง' && dinnerChoice !== 'ข้าวแกง') {
+            // Change background color to red for the buffet event
+            document.body.style.backgroundColor = '#FF6347'; // Tomato red
+
+            addChoice("ไปกินบุฟเฟ่กับเพื่อนดีกว่า", () => {
+                playerStatus[2] = [
+                    playerStatus[2][0] + 21,
+                    playerStatus[2][1] + 40,
+                    playerStatus[2][2] + 140,
+                    playerStatus[2][3] + 1000
+                ];
+                endDay();
+            });
+            addChoice("เหนื่อยแล้วกลับบ้านดีกว่าา", () => endDay());
+        } else {
+            endDay();
+        }
+    } else {
+        endDay();
+    }
+}
+
+
+        function endDay() {
+            // Calculate totals
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 4; j++) {
+                    playerStatus[3][j] += playerStatus[i][j];
+                }
+            }
+            playerStatus[3][3] += 500; // Add extra calories
+
+            // Display the results before adjustment
+            let resultBefore = `Before Adjustment: น้ำตาล: ${playerStatus[3][0].toFixed(1)}, ไขมัน: ${playerStatus[3][1].toFixed(1)}, โปรตีน: ${playerStatus[3][2].toFixed(1)}, แคลอรี่: ${playerStatus[3][3].toFixed(1)}`;
+            document.getElementById('result-before').innerText = resultBefore;
+
+            // Adjust the results with Math.abs and display them
+            playerStatus[4] = [
+                Math.abs(playerStatus[3][0]) - 16,
+                Math.abs(playerStatus[3][1]) - 78,
+                Math.abs(playerStatus[3][2]) - 105,
+                Math.abs(playerStatus[3][3]) - 1800
+            ];
+
+            let resultAfter = `After Adjustment: น้ำตาล: ${playerStatus[4][0].toFixed(1)}, ไขมัน: ${playerStatus[4][1].toFixed(1)}, โปรตีน: ${playerStatus[4][2].toFixed(1)}, แคลอรี่: ${playerStatus[4][3].toFixed(1)}`;
+            document.getElementById('result-after').innerText = resultAfter;
+
+            determineEnding();
+        }
+
+        function determineEnding() {
+            // Clear the screen before showing the ending
+            clearChoices();
+
+            // Check the player's final status and determine the ending
+            if (
+                Math.abs(playerStatus[4][0]) < 16 &&
+                Math.abs(playerStatus[4][1]) < 78 &&
+                Math.abs(playerStatus[4][2]) < 105 &&
+                Math.abs(playerStatus[4][3]) < 900
+            ) {
+                if (Math.random() < 0.5) {
+                    displayMessage("คนคุยคุณชวนคุณไปเลี้ยงบุพเฟ่");
+                } else {
+                    displayMessage("คนคุยคุณตอบตกลงเป็นแฟน");
+                }
+            } else {
+                const ending1 = Math.random() < 0.5;
+                const ending2 = Math.random() < 0.5;
+                if (ending1) {
+                    displayMessage("คุณเครียดจนฆ่าตัวตาย");
+                } else if (ending2) {
+                    displayMessage("อยู่ๆคนคุยคุณก็บล๊อคคุณ");
+                } else {
+                    displayMessage("ระหว่างข้ามถนน อยู่ๆก็มีรถบรรทุกวิ่งมาด้วยความเร็วสูงแล้วชนใส่คุณอย่างจัง คุณได้เกิดใหม่ในโลกที่ไม่มีของหวาน");
                 }
             }
 
-            // Expose the function to global scope
-            window.handleChoice = handleChoice;
+            // Add Play Again and Exit buttons
+            addChoice("เล่นอีกครั้ง", () => location.reload());
+            addChoice("ออก", () => window.location.href = "index.html");
         }
+
+        // Start the game on page load
+            startGame();
+        }
+
     </script>
 </body>
 
