@@ -1,12 +1,383 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dieses spiel ist gesund</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        /* Global Styles */
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background 0.5s ease-in-out;
+        }
+        /* Name Input Screen */
+        .yourname {
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .formyourname {
+            display: flex;
+            flex-direction: column;
+        }
+        .formyourname input {
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            outline: none;
+            transition: border 0.3s ease-in-out;
+        }
+        .formyourname input:focus {
+            border-color: #8bc34a;
+        }
+        .formyourname button {
+            padding: 15px;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            background-color: #8bc34a;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out;
+        }
+        .formyourname button:hover {
+            background-color: #7cb342;
+        }
+        /* Main Container */
+        .container {
+            display: none;
+            color: #333;
+            padding: 20px;
+            max-width: 800px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        /* Text Display */
+        .text {
+            margin-bottom: 20px;
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            max-height: 400px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #ccc #fff;
+            opacity: 1;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+        .text.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .text p {
+            margin: 0;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 18px;
+        }
+        .text::-webkit-scrollbar {
+            width: 8px;
+        }
+        .text::-webkit-scrollbar-track {
+            background: #fff;
+        }
+        .text::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 8px;
+        }
+        /* Choice Buttons */
+        .choice {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .choice button {
+            flex: 1 1 calc(50% - 15px);
+            padding: 15px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            background-color: #8bc34a;
+            color: white;
+            transition: background-color 0.3s ease-in-out;
+            opacity: 1;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out, background-color 0.3s ease-in-out;
+        }
+        .choice button.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .choice button:hover {
+            background-color: #7cb342;
+        }
+        /* Image Container Styling */
+        #image-container {
+            text-align: center;
+            margin-bottom: 20px;
+            display: block;
+        }
+        #image-container img {
+            max-width: 30%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            opacity: 1;
+            transform: scale(0.95) translateY(20px);
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+        #image-container.show img {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+        @media (max-width: 600px) {
+            .choice button {
+                flex: 1 1 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-  <a href="solo.html"><h2>solo</h2></a>
-  <a href="multiplayers.html"><h2>multiplayers</h2></a>
+    <div class="yourname" id="yourname">
+        <form class="formyourname">
+            <input type="text" class="name" placeholder="กรุณาใส่ชื่อผู้เล่น" id="playerName" required>
+            <button type="button" class="start" id="start">เริ่ม</button>
+        </form>
+    </div>
+    <div class="container" id="container">
+        <div id="image-container"></div>
+        <div class="text">
+            <p id="text"></p>
+        </div>
+        <div class="choice" id="choiceContainer">
+            <button id="choice1" value="1" style="display: none;">Choice 1</button>
+            <button id="choice2" value="2" style="display: none;">Choice 2</button>
+            <button id="choice3" value="3" style="display: none;">Choice 3</button>
+            <button id="choice4" value="4" style="display: none;">Choice 4</button>
+        </div>
+    </div>
+    <script>
+        let player_choice = {};
+        let currentScenario = 0;
+        let playerName = '';
+        
+        function checkForImage(message) {
+            const imagePattern = /\{\((.*?)\)\}/; 
+            const match = message.match(imagePattern);
+
+            if (match) {
+                const imageUrl = match[1]; 
+                const imageContainer = document.getElementById('image-container');
+                imageContainer.innerHTML = `<img src="img/${imageUrl}" alt="Scenario Image" />`;
+                return message.replace(imagePattern, '');
+            }
+            return message;
+        }
+
+
+
+        function typewriter(text, callback, speed = 20) {
+            let i = 0;
+            const p = document.getElementById('text');
+            p.innerText = '';  
+            p.classList.remove('show');
+
+            text = text.replace(/คุณ/g, playerName);
+
+            function printChar() {
+                if (i < text.length) {
+                    if (text.charAt(i) === '\n') {
+                        setTimeout(() => {
+                            p.innerText = '';
+                            i++;  
+                            printChar();
+                        }, 3000);
+                    } else {
+                        p.innerText += text.charAt(i);
+                        i++;
+                        p.scrollTop = p.scrollHeight;
+                        setTimeout(printChar, speed);
+                    }
+                } else {
+                    p.classList.add('show');
+                    if (callback) {
+                        setTimeout(callback, 500);
+                    }
+                }
+            }
+
+            setTimeout(() => {
+                p.classList.add('show');
+                printChar();
+            }, 500);
+        }
+
+
+
+
+        function choice_select(index, assign, message, ...choices) {
+            player_choice[index] = { assign: assign, message: message, choice: '' };
+            const cleanMessage = checkForImage(assign);
+            
+            if (assign !== null) {
+                typewriter(cleanMessage, function() {
+                    choices.forEach((choice, i) => {
+                        const button = document.getElementById('choice' + (i + 1));
+                        if (button) {
+                            button.style.display = 'block';
+                            button.innerText = choice;
+                            button.onclick = function() {
+                                player_choice[index].choice = choice;
+                                hideButtons();
+                                currentScenario++;
+                                setTimeout(nextScenario, 3000);
+                            };
+                        }
+                    });
+                });
+            }
+        }
+
+
+        function hideButtons() {
+            document.querySelectorAll('.choice button').forEach(button => {
+                button.style.display = 'none';
+                button.classList.remove('show');
+            });
+        }
+
+        function clearImage() {
+            const imageContainer = document.getElementById('image-container');
+            if (imageContainer) {
+                imageContainer.innerHTML = '';  
+                imageContainer.style.display = 'none';  
+            }
+        }
+
+
+        function nextScenario() {
+        if (currentScenario === 0) {
+            player_choice[currentScenario] = ["{(0img.png)}คุณ เป็นนักเรียนม.ปลายหนึ่งในหลายๆคนที่อยากเข้าคณะแพทย์ดังนั้นคุณจึงได้เลือกไปฝึกประสบการณ์ที่โรงพยาบาลแห่งหนึ่ง", null, null, currentScenario];
+            const message = player_choice[currentScenario][0];
+            const cleanMessage = checkForImage(message);
+            typewriter(cleanMessage, function() {
+                document.getElementById('text').innerText += "\n";
+                currentScenario++;
+                setTimeout(nextScenario, 3000);
+            });
+        }
+            else if (currentScenario === 1) {
+                //clearImage();
+                document.body.style.background = '#53c';
+                choice_select(currentScenario, "{(1img.png)}คุณ : วันนี้แล้วสินะวันแรกของการได้ไปฝึกงาน รีบเตรียมตัวกินข้าวกินน้ำดีกว่า", 3, "กินข้าวผัดจะได้อิ่มๆพร้อมลุยงาน", "กินขนมปังจะได้กินและได้ไปทำงานไวขึ้น", "ไม่กินดีกว่าจะได้รีบออกไปทำงานเลยนะ");
+                console.log(player_choice[1]);
+            }
+            else if (currentScenario === 2) {
+                console.log(player_choice[1]);
+                console.log(player_choice[1].choice);
+                document.body.style.background = '#5dca3c';
+                if(player_choice[1].choice === "กินข้าวผัดจะได้อิ่มๆพร้อมลุยงาน") {
+                    choice_select(currentScenario, "คุณ : อิ่มดีจังแฮะได้เวลาไปละมาถึงแล้วสินะไปติดต่อหมออาร์ดีกว่า\n{(2.1.1img.jfif)}คุณ : สวัสดีครับ\nหมออาร์ : อ่าวมาถึงแล้วสินะ งั้นพร้อมรึยังละ\nคุณ : พร้อมมากเลยครับ\nหมออาร์ : งั้นดีเลยมาเริ่มจากการเข้าใจส่วนต่างๆในรพ ก่อนนะ\nหมออาร์ เล่า …..\nคุณ : เข้าใจแล้วครับหมอ \nหมออาร์ : โอเคครับ งั้นวันนี้เริ่มงานเบื้องต้นก่อนคือให้สังเกตการทำงานของพี่ๆพยาบาลนะ \nหมออาร์ : อยากเริ่มที่แผนกไหนล่ะ", 2, "แผนกผู้ป่วยนอกก่อนจะได้เห็นตั้งแต่การรับคนไข้", "แผนกผู้ป่วยในก่อนจะได้เห็นว่าพี่ๆเขาทำงานกับคนไข้ที่ at mid ยังไง");
+                }
+                else if(player_choice[1].choice === "กินขนมปังจะได้กินและได้ไปทำงานไวขึ้น"){
+                    choice_select(currentScenario, "{(2.1.1img.jfif)}คุณ : กินไม่ค่อยอิ่มเท่าไหร่แต่ก็พอไหวอะนะ \nคุณ : มาถึงแล้วต้องไปตรงไหนล่ะเนี่ย อ่อไปหาหมออาร์นี่เอง\nหมออาร์ :  เอ้ามาถึงแล้วๆ วันแรกแล้วพร้อมไหม\nคุณ : ประม่านิดหน่อยครับไม่ค่อยมั่นใจเท่าไหร่เลยครับ\nหมออาร์ : ไม่ต้องกังวลนะวันแรกหมอก็เป็นเหมือนกัน เอาละเรามาเตรียมตัวกันดีกว่าเริ่มจากการเข้าใจส่วนต่างๆในรพ ก่อนนะ\nหมออาร์ เล่า …..\nจนความประหม่าของคุณ เริ่มลดลง\nหมออาร์ : โอเคครับ งั้นวันนี้เริ่มงานเบื้องต้นก่อนคือให้สังเกตการทำงานของพี่ๆพยาบาลนะ อยากเริ่มที่แผนกไหนล่ะ", 2, "แผนกผู้ป่วยนอกก่อนจะได้เห็นตั้งแต่การรับคนไข้", "แผนกผู้ป่วยในก่อนจะได้เห็นว่าพี่ๆเขาทำงานกับคนไข้ที่ at mid ยังไง");
+                }
+                else{
+                    player_choice[currentScenario] = ["{(2.1.1img.jfif)}คุณ : หิวอ่ะ เดี๋ยวค่อยไปหาอะไรกินข้างหน้าแล้วค่อยไปหาหมออาร์นี่เอง\nหมออาร์ : เอ้ามาถึงแล้วหรอ ได้กินอะไรมายังเนี่ย\nคุณ : ยังเลยครับ\nหมออาร์ : รีบๆไปหาของกินรองท้องก่อนนะ\nคุณ : ทำไมล่ะครับ\nหมออาร์ : เดี่ยวเธอจะปวดท้องเอาหน่ะ งั้นไปที่โรงอาหารข้างรพ ก่อนนะ\nคุณ : โอเคครับ เดี่ยวจะรีบกลับมานะครับ\nหมออาร์ : กลับมาแล้วเป็นยังไงบ้างรู้สึกดีขึ้นใช่ไหม\nคุณ : ดีขึ้นมากเลยครับเอา\nหมออาร์ : เอาละจะไม่ให้เสียเวลามากกว่านี้ เราจะเริ่มจาก เริ่มงานเบื้องต้นก่อนคือให้สังเกตการทำงานของพี่ๆพยาบาลนะเริ่มจาก พี่ๆฝั่งแผนกผู้ป่วยนอกก่อน \nคุณ : ได้เลยครับ",null,"หมออาร์มให้ไปแผนกผู้ป่วยนอกก่อน",currentScenario]
+                    const message = player_choice[currentScenario][0];
+                    const cleanMessage = checkForImage(message);
+                    typewriter(cleanMessage, function() {
+                        document.getElementById('text').innerText += "\n";
+                        currentScenario++;
+                        setTimeout(nextScenario, 3000);
+                    });
+                }
+            }
+            else if (currentScenario === 3){
+                console.log(player_choice[2]);
+                console.log(player_choice[2][2]);
+                if(player_choice[2].choice === "แผนกผู้ป่วยนอกก่อนจะได้เห็นตั้งแต่การรับคนไข้" || player_choice[2][2] === "หมออาร์มให้ไปแผนกผู้ป่วยนอกก่อน"){
+                    player_choice[currentScenario] = ["{(3.1img.png)}พี่บิว : สวัสดีค่ะ น้องชื่อ คุณ ใช่ไหม\nคุณ : ใช่ครับ\nพี่บิว : พี่ขอแนะนำตัวก่อนนะ พี่ชื่อบิวนะคะ พี่จะพาน้องดูว่าพี่ๆเนี่ยทำงานกันยังไงบ้าง เริ่มจากการรับผู้ป่วยก่อนนะ \n..พี่บิวเล่า\nคุณ : เอ่อ..พี่ครับ แผนกนี้ส่วนใหญ่เจอเคสอะไรบ้างครับ\nพี่บิว : ส่วนใหญ่ก็เคสเจ็บปวยทั่วไปนี่แหละ เช่น อุบัติเหตุเล็กน้อย ไม่สบาย ปวดท้อง อะไรพวกนี้\nคุณ : แล้วเคสไหนมาประจำล่ะครับ\nพี่บิว : เคสที่มาประจำคือผู้ป่วยเบาหวานที่มาตรวจร่างกายตามนัดหน่ะ \nคุณ : อย่างงี้นี่เอง ตามที่ผมคิดไว้เลย\nบิว เห็นคนอื่นๆเป็นกันเยอะหรอ\nคุณ : ใช่ครับ ทั้งแม่และญาติคนอื่นๆก็เป็นกัน\nพี่บิว : อย่างงี้นี่เอง แล้วน้องจะไปไหนต่อล่ะคะ\nคุณ : คงกลับไปหาหมออาร์หน่ะครับ\nพี่บิว : งั้นหรอคะ บั้ยบาย",null,"บิวส่งคุณกลับไปหาหมออาร์ม",currentScenario]
+                    const message = player_choice[currentScenario][0];
+                    const cleanMessage = checkForImage(message);
+                    typewriter(cleanMessage, function() {
+                        document.getElementById('text').innerText += "\n";
+                        currentScenario++;
+                        setTimeout(nextScenario, 3000);
+                    });
+                }
+                else{
+                    player_choice[currentScenario] = ["{(3.2img.png)}พี่เนเน่ : สวัสดีค่ะ น้อง คุณ ใช่ไหม\nคุณ : ใช่ครับ\nพี่เนเน่ : พี่ชื่อเนเน่นะ พี่จะพาน้องเริ่มจากเคสที่เจอบ่อยที่สุดก่อน น้องคิดว่าเราเจอเคสอะไรบ่อยๆบ้าง\nคุณ : เท่าที่เห็นคนเป็นมากๆก็เบาหวานความดันนี่แหละครับ เพราะแม่ผมก็เริ่มเป็นแล้วครับและญาติคนอื่นๆก็เป็นกันมากขึ้น\nพี่เนเน่ : สุดยอดเป็นคนที่ช่างสังงเกตคนรอบตัวจังเลยนะ\nคุณ : ขอบคุณครับ\nพี่เนเน่ : ใช่แล้วล่ะส่วนใหญ่มักจะเป็นเบาหวานกับความดันเป็นอันดับแรกๆ แต่ที่เจอบ่อยมากๆก็เบาหวานนี่เพราะ จากที่พี่เรียนมาอาจารย์เคยให้พี่ดูสถิติ พี่นี่รู้สึกช็อคคา lecture นั้นเลย\nคุณ : โหมากขนาดนั้นเลยหรอครับ\nพี่เนเน่ : ใช่ค่ะ ตั้ง 1181575 คน เลย\nพี่เนเน่ : เอาล่ะถึงแม้จะเป็นโรคประจำตัวน่ะแต่ก็ใช้ชีวิตตามปกติได้นะ\nคุณ : ได้ยังไงล่ะครับ\nพี่เนเน่ : เพราะโรคเบาหวานไม่ใช่โรคที่เป็นแล้วร้ายแรงแต่เป็นโรคที่รักษาไม่หาย เนื่องจากส่วนใหญ่เกิดจากระบบผลิตอินซูลินมีปัญหา ทำให้ต้องกินยาตลอดเพื่อคุมปริมาณนี้ตาลหน่ะ\nคุณ : แล้วทำไมคนที่เป็นเป็นโรคเบาหวานหลายๆคนถึงได้ถึงขั้นต้องเข้าหวอด อย่างในหวอดที่เราอยู่นี่หล่ะครับ หรือบางคนถึงขั้นต้องตัดขาด้วยหล่ะครับ\nพี่เนเน่ : จากประวัติผู้ป่วยส่วนใหญ่มักเป็นผู้ป่วยที่มีอายุมากแล้วและมีหลายคนเป็นโรคแทรกซ้อน หลายคนก็หยุดกินยาเพราะเข้าใจว่าตัวเองหายแล้ว\nคุณ : อ่อครับ แล้วทำไมถึงมีการเข้าใจผิดว่าหายแล้วล่ะครับ\nพี่เนเน่ : เพราะเวลาที่เรากินยา ยาจะทำให้ระดับน้ำตาลในเลือดกลับมาปกติทำให้ผู้ป่วยเข้าผิดว่าหายแล้วยังไงล่ะอ๋อ \nเคุณ : พราะยาที่กินไปทำหน้าที่แทนระบบผลิตอินซูลินเท่าให้น้ำตาลกลับมาเป็นปกติแล้วทำให้เสมือนว่าเราไม่ได้ป่วย ใช่ไหมครับ\nพี่เนเน่ : เก่งมาก แสดงว่าเราทำการบ้านมาดีนะเนี่ย งั้นเรามาเริ่มดูการทำงานอื่นๆบ้างดีกว่า\nพี่เนเน่ : จบการดูแผนกผู้ป่วนนอกแล้ว เราจะไปไหนต่อละ\nคุณ : น่าจะไปหาหมออาร์ต่อหน่ะครับ\nพี่เนเน่ : อ๋อ งั้นขอให้น้องโชคดีนะคะ",null,"เนเน่ส่งคุณกลับไปหาหมออาร์",currentScenario]
+                    const message = player_choice[currentScenario][0];
+                    const cleanMessage = checkForImage(message);
+                    typewriter(cleanMessage, function() {
+                        document.getElementById('text').innerText += "\n";
+                        currentScenario++;
+                        setTimeout(nextScenario, 3000);
+                    });
+                }
+            }
+            else if (currentScenario === 4) {
+                if(player_choice[2].choice === "แผนกผู้ป่วยนอกก่อนจะได้เห็นตั้งแต่การรับคนไข้" || player_choice[2][2] === "หมออาร์มให้ไปแผนกผู้ป่วยอกนก่อน"){
+                    player_choice[currentScenario] = ["{(2.1.1img.jfif)}หมออาร์ : ไปดูแผนกผู้ป่วยนอกเป็นไงบ้างล่ะ\nคุณ : ได้ความรู้กับประสบการณ์เยอะเลยครับ \nหมออาร์ : งั้นแล้วสนใจเรื่องอะไรเป็นพิเศษไหม\nคุณ : ผมสนใจเรื่องโรคเบาหวานมากเลยแต่ผมก็ยังสงสัยเรื่องนึงอยู่ \nคุณ : คือส่วนใหญ่ผมเห็นคนเป็นต้องแต่อายุ 40 ขึ้นไปแต่ช่วงที่ผมได้ไปดูการทำงานกับพี่บิวผมเห็นผู้ป่วยคนนึง \nคุณ : เขาน่าจะ 20 ต้นๆเองแต่เขามาหาหมอตามนัดเกี่ยวกับโรคเบาหวานนี่แหละครับ ผมสงสัยว่าแค่ 20 ต้นๆเป็นโรคเบาหวานได้ด้วยหรอครับ\nหมออาร์ : น่าสนใจดีนะเรื่องนี้ เดี่ยวผมพาไปดูอะไรสักหน่อย\nหมออาร์ : งั้นเราเดินมาที่แผนกวิจัยและป้องกันโรคกัน\nคุณ : น่าไปมากเลยครับงั้นเราไปกันเลยครับ\nหมออาร์ : เรามาถึงกันแล้วนะ ขอแนะนำให้รู้จัก พี่หน่ายก่อนนะ พี่หน่ายเป็นนักวิจัยที่ทำเกี่ยวกับเรื่องเบาหวานในวัยรุ่นโดยเฉพาะเลยล่ะ\nพี่หน่าย : สวัสดีครับน้องเห็นว่าน้องได้ไปดูมา หวอดผู้ป่วยในมาแล้ว แล้วน้องสนใจเกี่ยวกับโรคเบาหวานในวัยรุ่น เรื่องอะไรเป็นพิเศษล่ะ \nคุณ : ผมสงสัยว่าแค่ 20 ต้นๆเป็นโรคเบาหวานได้ด้วยหรอครับ\nพี่หน่าย : เป็นได้สิ มาดูนี่นะจจากสถิติของอเมริกามีผู้ป่วยวัยรุ่นเป็นเบาหวานากขึ้นและเพิ่มขึ้นมากจนน่าตกใจ \nพี่หน่าย : พี่ได้นำข้อูลนี้มาเทียบกับของไทยแล้วแนวโน้มก็เป็นแบบเดียวกันซึ่งพี่และคนอื่นๆได้หารูปแบบว่าการเพิ่มขึ้นของคนที่เป็นโรคในหวานในวัยรุ่นเกิดจากอะไรได้บ้าง \nพี่หน่าย : พี่ได้สาเหตุหลักๆคือการกิน อาหารที่สามารถแปลงเป็นน้ำตาลได้ ซึ่งมีเยอะมากโดยเฉพาะอาหาร ฟ้าดฟู้ด หรืออาหารเวฟตามร้านสะดวกซึ่ง และเครื่องดื่มเดี๋ยวนี้มีที่เป็นของหวานเยอะเช่นชาใข่มุข น้ำปั่น \nพี่หน่าย : : หรือแม้แต่กาแฟที่มีการใส่น้ำตาลเพิ่ม เหล่านี้ทำให้วัยรุ่นเป็นเบาหวานมากขึ้น \nพี่หน่าย : แล้วพี่ยังค้นพบความน่ากลัวของการเป็นโรคนี้ในวัยรุ่น \nพี่หน่าย : คือการเป็นในช่วงอายุไม่เยอะต้องใช้การรักษาที่ใช้ระยะยาวมากกว่าวัยที่มีอายุ 40 ขึ้นไปและยังต้องคุมการกินอย่างเคร่งครัดด้วย\nพี่หน่าย : ซึ่งเป็นทึ่น่าหนักใจสำหรับวัยรุ่นมาก\nคุณ : ผมก็ว่าอย่างงั้น ผมคงนอนไม่หลับหลายๆวันแน่เลยหลังจากที่ผมรู้ตัวว่าเป็น\nพี่หน่าย : เห็นไหมว่าเบาหวานวัยไหนก็อันตรายถึงแม้จะรักษาได้แต่ต้องดูแลตัวเองให้ดีตลอดไป\nคุณ : ผมเข้าใจแล้วครับงั้นวันนี้ผมเริ่มมีไฟอยากหาข้อมูลลเรื่องนี้เพิ่มแล้วสิ\nหมออาร์ : งั้นวันนี้พร้อมจะกลับแล้วใช้ไหม\nคุณ : ผมใช่แล้วล่ะครับ\nหมออาร์ : ขอให้โชคดีนะครับแล้วพน.เจอกันใหม่\nคุณ : ผมฝากหมออาร์ขอบคุณทุกๆคนด้วยนะครับผมได้ประสบการณ์ต่างๆเยอะเลย\nหมออาร์ : ยินดีครับ งั้นขอให้เดินกลับอย่างปลอดภัยนะครับ ",null,"หมออาร์พาคุณไปดูงานวิจัย",currentScenario]
+                    const message = player_choice[currentScenario][0];
+                    const cleanMessage = checkForImage(message);
+                    typewriter(cleanMessage, function() {
+                        document.getElementById('text').innerText += "\n";
+                        currentScenario++;
+                        setTimeout(nextScenario, 3000);
+                    });
+                }
+                else {
+                    player_choice[currentScenario] = ["{(4.2img.png)}หมออาร์ : เป็นยังไงบ้างล่ะ \nคุณ : ได้ความรู้เยอะมากๆเลย \nคุณ : ผมเริ่มอยากกลับไปอ่านนหนังสือเพิ่มเติมแล้ว \nคุณ : งั้นผมขอตัวไปหาความรู้ก่อนค่อยมาศึกษาเพิ่มหน่ะครับ \nคุณ : ยังไงผมก็ฝากขอบคุณพี่ๆทุกคนด้วยนะครับ\nหมออาร์ : ยินดีครับ งั้นขอให้เดินกลับอย่างปลอดภัยนะครับ",null,"คุณกลับบ้าน",currentScenario]
+                    const message = player_choice[currentScenario][0];
+                    const cleanMessage = checkForImage(message);
+                    typewriter(cleanMessage, function() {
+                        document.getElementById('text').innerText += "\n";
+                        currentScenario++;
+                        setTimeout(nextScenario, 3000);
+                    });
+                }
+            }
+            else if (currentScenario === 5) {
+                let summaryText = "นี่คือสิ่งที่คุณได้เลือกไปในแต่ละช่วงของวัน:\n\n";
+                player_choice.forEach((choice, index) => {
+                    if (choice[2] !== "") {
+                        summaryText += `สถานการณ์ที่ ${index + 1}: ${choice[0]} คุณเลือก: ${choice[2]}\n\n`;
+                    }
+                });
+                typewriter(summaryText, function() {
+                    document.getElementById('text').i
+                    nnerText += "\n\nนี่คือสิ่งที่คุณเลือกในวันนี้!";
+                });
+            }
+        }
+
+        document.getElementById('start').addEventListener('click', function() {
+            playerName = document.getElementById('playerName').value.trim();
+            if (playerName === '') {
+                alert('กรุณาใส่ชื่อผู้เล่น');
+                return;
+            }
+            document.getElementById('yourname').style.display = 'none';
+            document.getElementById('container').style.display = 'block';
+            nextScenario();
+        });
+    </script>
 </body>
 </html>
