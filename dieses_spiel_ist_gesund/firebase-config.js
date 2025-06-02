@@ -5,13 +5,13 @@ import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstati
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDLY7ie39rKxvU_Evkq-VK25uvlVgqm6yQ",
-  authDomain: "diesesi-spiel-ist-gesund.firebaseapp.com",
-  databaseURL: "https://diesesi-spiel-ist-gesund-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "diesesi-spiel-ist-gesund",
-  storageBucket: "diesesi-spiel-ist-gesund.appspot.com",
-  messagingSenderId: "419197734080",
-  appId: "1:419197734080:web:834d4e0854eed5cec53125"
+  apiKey: "",
+  authDomain: "",
+  databaseURL: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
 };
 
 // Initialize Firebase
